@@ -1,4 +1,31 @@
 $(document).ready(function() {
+	var $input = $("#type_text");
+	window.game = new Game({
+		sentence: "salam halet chetore? omid varam ke hame chi khoob pish bere..."
+	});
+
+	game.on('correctKeyStroke', function(word, correctKeyStroke) {
+		console.log('correctKeyStroke ', word, correctKeyStroke);
+	});
+
+	game.on('wrongKeyStroke', function(word, wrongContent) {
+		console.log('wrongKeyStroke ', word, wrongContent);
+	});
+
+	game.on('correctWord', function(word) {
+		console.log('correct word: ', word);
+		$input.val('');
+	});
+
+	game.on('wrongWord', function(word) {
+		console.log('wrong word: ', word);
+	});
+
+	game.on('finished', function(stats) {
+		console.log(stats);
+	});
+
+
 	var sentence = "salam halet chetore? omid varam ke hame chi khoob pish bere...";
 	var words = sentence.split(" ");
 	// var words = "a a a a a a a a a a a".split(" ");
@@ -27,6 +54,8 @@ $(document).ready(function() {
 
 	$("#type_text").keyup(function(ev) {
 		var content = $(this).val();
+		game.Process(content, ev.which);
+		return;
 		content = content.split(" ")[0];
 		var charIndex = content.length ? content.length - 1 : 0;
 		if (content == "") {

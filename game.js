@@ -48,21 +48,25 @@ function Game(options) {
 	};
 
 	this.onCorrectWord = function(correctWord) {
-		this.__emit('correctWord', word);
+		this.__emit('correctWord', correctWord);
 	};
 
-	this.onWrongWord = function(correctWord) {
-		this.__emit('wrongWord', word);
+	this.onWrongWord = function(wongWord) {
+		this.__emit('wrongWord', wongWord);
 	};
 }
 
-Game.prototype.__emit = function(evName, params) {
-	var ev = this.events['evName'];
-	if (!ev) {
-		throw new Error("Event not found!");
-	}
+Game.prototype.__emit = function(evName) {
+	var ev = this.events[evName];
+	var args = [];
 
-	ev.call(this, params);
+	for(var arg in arguments) {
+		args.push(arguments[arg]);
+	}
+	
+	if (ev) {
+		ev.apply(this, args.slice(1));
+	}
 }
 
 Game.prototype.Process = function(text, lastCharCode) {
@@ -72,7 +76,6 @@ Game.prototype.Process = function(text, lastCharCode) {
 	if (text == "") {
 		return false;
 	}
-	// console.log(words[wordIndex][charIndex]);
 	
 	//remove continiously spaces
 	if(lastCharCode == 32 && text == ' ') {
@@ -82,36 +85,35 @@ Game.prototype.Process = function(text, lastCharCode) {
 			console.log('word is correct');
 			self.onCorrectWord(text);
 			self.wordIndex++;
+			self.correctKeyStrokes += text.length;
+			self.correctKeyStrokes++;
 			if (self.wordIndex == this.words.length) {
-				self.onFinished(__getStats());
+				self.onFinished(__getStats(self));
 			}
-			self.trueKeys += text.length;
-			self.trueKeys++;
 		} else {
 			if (self.lastWrongWordIndex != self.wordIndex) {
 				self.wrongWords++;
 			}
 
-			self.onCorrectWord(text);
+			self.onWrongWord(text);
 		}
 		
 	} else {
 		//process entered character
-		self.allKeys++;
 		var _w = text.replace(/\s/g, '');
 		if (_w == self.words[self.wordIndex].substring(0, text.length)) {
 			//all characters all correct
 			self.onCorrectKeyStroke(self.words[self.wordIndex], _w);
 			self.lastWrongKeys = 0;
 		} else {
-			numOfDiffs = levenshteinDistance(words[wordIndex].substring(0, text.length), _w);
-			if (lastCharCode == 8) {
+			var numOfDiffs = levenshteinDistance(self.words[self.wordIndex].substring(0, text.length), _w);
+			if (self.lastCharCode == 8) {
 				return;
 			}
 			if (self.wordIndex != self.lastWrongWordIndex) {
-				self.wrongKeys += numOfDiffs;
+				self.wrongKeyStrokes += numOfDiffs;
 			} else if (numOfDiffs != self.lastWrongKeys) {
-				self.wrongKeys += Math.abs(numOfDiffs - self.lastWrongKeys);
+				self.wrongKeyStrokes += Math.abs(numOfDiffs - self.lastWrongKeys);
 			}
 
 			self.onWrongKeyStroke(self.words[self.wordIndex], _w);
@@ -133,7 +135,7 @@ Game.prototype.Process = function(text, lastCharCode) {
 
 
 Game.prototype.on = function(evName, callback) {
-	this[evName] = callback;
+	this.events[evName] = callback;
 	return this;
 }
 
