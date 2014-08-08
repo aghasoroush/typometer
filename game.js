@@ -25,6 +25,7 @@ function __getStats(gameObject) {
 
 function Game(options) {
 	this.sentence 			= options.sentence;
+	this.events				= {};
 	this.wrongKeyStrokes	= 0;
 	this.correctKeyStrokes 	= 0;
 	this.correctWords 		= 0;
@@ -32,27 +33,36 @@ function Game(options) {
 	this.wordIndex			= 0;
 	this.lastWrongWordIndex	= 0;
 	this.lastWrongKeys		= 0;
-	this.words 				= sentence.split(" ");
+	this.words 				= options.sentence.split(" ");
 
 	this.onWrongKeyStroke = function(word, worngContent) {
-		this.emit('wrongKeyStroke', word, worngContent);
+		this.__emit('wrongKeyStroke', word, worngContent);
 	};
 
 	this.onCorrectKeyStroke = function(word, correctContent) {
-		this.emit('correctKeyStroke', word, correctContent);
+		this.__emit('correctKeyStroke', word, correctContent);
 	};
 
 	this.onFinished = function(stats) {
-		this.emit('finished', stats);
+		this.__emit('finished', stats);
 	};
 
 	this.onCorrectWord = function(correctWord) {
-		this.emit('correctWord', word);
+		this.__emit('correctWord', word);
 	};
 
 	this.onWrongWord = function(correctWord) {
-		this.emit('wrongWord', word);
+		this.__emit('wrongWord', word);
 	};
+}
+
+Game.prototype.__emit = function(evName, params) {
+	var ev = this.events['evName'];
+	if (!ev) {
+		throw new Error("Event not found!");
+	}
+
+	ev.call(this, params);
 }
 
 Game.prototype.Process = function(text, lastCharCode) {
@@ -78,8 +88,6 @@ Game.prototype.Process = function(text, lastCharCode) {
 			self.trueKeys += text.length;
 			self.trueKeys++;
 		} else {
-			changeBackground(wordIndex, 'red');
-			
 			if (self.lastWrongWordIndex != self.wordIndex) {
 				self.wrongWords++;
 			}
@@ -123,6 +131,11 @@ Game.prototype.Process = function(text, lastCharCode) {
 	}
 }
 
+
+Game.prototype.on = function(evName, callback) {
+	this[evName] = callback;
+	return this;
+}
 
 // Game.prototype.__proto__ = events.EventEmitter.prototype;
 // module.exports = Game;
