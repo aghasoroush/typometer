@@ -1,7 +1,8 @@
 $(document).ready(function() {
 	var $input = $("#type_text");
 	window.game = new Game({
-		sentence: "salam halet chetore? omid varam ke hame chi khoob pish bere..."
+		sentence: "salam halet chetore? omid varam ke hame chi khoob pish bere...",
+		sentenceDomElem: $("#text")
 	});
 
 	game.on('correctKeyStroke', function(word, correctKeyStroke) {
@@ -26,35 +27,13 @@ $(document).ready(function() {
 	});
 
 
-	var sentence = "salam halet chetore? omid varam ke hame chi khoob pish bere...";
-	var words = sentence.split(" ");
-	// var words = "a a a a a a a a a a a".split(" ");
-	$("#type_text").focus();
-	var wordIndex = 0;
-	var lastContent = "";
-	var lastWrongWordIndex = 0;
-	var lastWrongKeys = 0;
-	var wrongKeys = 0;
-	var wrongWords = 0;
-	var allKeys = 0;
-	var trueKeys = 0;
-	// var words = $("#text").text();
-	var htmlWords = "";
-	for(var w in words) {
-		htmlWords += '<span id="word-' + w + '">' + words[w] + '</span> ';
-	}
-	$("#text").html(htmlWords);
-	// words = words.split(" ");
-	console.log(words);
-
-
 	$("#type_text").bind('copy paste cut', function(e) {
 		e.preventDefault();
 	});
 
 	$("#type_text").keyup(function(ev) {
 		var content = $(this).val();
-		game.Process(content, ev.which);
+		game.process(content, ev.which);
 		return;
 		content = content.split(" ")[0];
 		var charIndex = content.length ? content.length - 1 : 0;

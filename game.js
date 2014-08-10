@@ -25,6 +25,7 @@ function __getStats(gameObject) {
 
 function Game(options) {
 	this.sentence 			= options.sentence;
+	this.sentenceDomElem	= options.sentenceDomElem;
 	this.events				= {};
 	this.wrongKeyStrokes	= 0;
 	this.correctKeyStrokes 	= 0;
@@ -35,24 +36,30 @@ function Game(options) {
 	this.lastWrongKeys		= 0;
 	this.words 				= options.sentence.split(" ");
 
-	this.onWrongKeyStroke = function(word, worngContent) {
-		this.__emit('wrongKeyStroke', word, worngContent);
+	var htmlWords = "";
+	for(var w in this.words) {
+		htmlWords += '<span id="word-' + w + '">' + this.words[w] + '</span> ';
+	}
+	this.sentenceDomElem.html(htmlWords);
+
+	this.onWrongKeyStroke = function(wordIndex, worngContent) {
+		this.__emit('wrongKeyStroke', this.getWordDetails(wordIndex), worngContent);
 	};
 
-	this.onCorrectKeyStroke = function(word, correctContent) {
-		this.__emit('correctKeyStroke', word, correctContent);
+	this.onCorrectKeyStroke = function(wordIndex, correctContent) {
+		this.__emit('correctKeyStroke', this.getWordDetails(wordIndex), correctContent);
 	};
 
 	this.onFinished = function(stats) {
 		this.__emit('finished', stats);
 	};
 
-	this.onCorrectWord = function(correctWord) {
-		this.__emit('correctWord', correctWord);
+	this.onCorrectWord = function(wordIndex) {
+		this.__emit('correctWord', this.getWordDetails(wordIndex));
 	};
 
-	this.onWrongWord = function(wongWord) {
-		this.__emit('wrongWord', wongWord);
+	this.onWrongWord = function(wordIndex) {
+		this.__emit('wrongWord', this.getWordDetails(wordIndex));
 	};
 }
 
@@ -69,7 +76,16 @@ Game.prototype.__emit = function(evName) {
 	}
 }
 
-Game.prototype.Process = function(text, lastCharCode) {
+Game.prototype.getWordDetails = function(wordIndex) {
+	var self = this;
+
+	return {
+		index: wordIndex,
+		word: self.words[wordIndex]
+	};
+}
+
+Game.prototype.process = function(text, lastCharCode) {
 	var self = this;
 	text = text.split(" ")[0];
 	var charIndex = text.length ? text.length - 1 : 0;
@@ -83,7 +99,7 @@ Game.prototype.Process = function(text, lastCharCode) {
 	} else if (lastCharCode == 32) { //check if space pressed
 		if (text == self.words[self.wordIndex]) {
 			console.log('word is correct');
-			self.onCorrectWord(text);
+			self.onCorrectWord(self.wordIndex);
 			self.wordIndex++;
 			self.correctKeyStrokes += text.length;
 			self.correctKeyStrokes++;
@@ -95,7 +111,7 @@ Game.prototype.Process = function(text, lastCharCode) {
 				self.wrongWords++;
 			}
 
-			self.onWrongWord(text);
+			self.onWrongWord(self.wordIndex);
 		}
 		
 	} else {
@@ -103,7 +119,7 @@ Game.prototype.Process = function(text, lastCharCode) {
 		var _w = text.replace(/\s/g, '');
 		if (_w == self.words[self.wordIndex].substring(0, text.length)) {
 			//all characters all correct
-			self.onCorrectKeyStroke(self.words[self.wordIndex], _w);
+			self.onCorrectKeyStroke(self.wordIndex, _w);
 			self.lastWrongKeys = 0;
 		} else {
 			var numOfDiffs = levenshteinDistance(self.words[self.wordIndex].substring(0, text.length), _w);
@@ -116,7 +132,7 @@ Game.prototype.Process = function(text, lastCharCode) {
 				self.wrongKeyStrokes += Math.abs(numOfDiffs - self.lastWrongKeys);
 			}
 
-			self.onWrongKeyStroke(self.words[self.wordIndex], _w);
+			self.onWrongKeyStroke(self.wordIndex, _w);
 			self.lastWrongWordIndex = self.wordIndex;
 			self.lastWrongKeys = numOfDiffs;
 		}
@@ -131,6 +147,11 @@ Game.prototype.Process = function(text, lastCharCode) {
 
 		return;
 	}
+}
+
+Game.prototype.changeBgColor = function(wordId, color) {
+	var wordElem = $("#word-" + wordIndex);
+	wordElem.css('background-color', color);
 }
 
 
